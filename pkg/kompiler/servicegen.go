@@ -21,27 +21,27 @@ import (
 // Handler function to be invoked
 {{ .FunctionDeclaration }}
 
+// Wrapped handler function
+func {{ .FunctionName }}Handler(w http.ResponseWriter, r *http.Request) {
+	ret := {{ .FunctionName}}(r.Body)
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte(ret)); err != nil {
+		fmt.Printf("Error writing to client: %v\n", err)
+	}
+}
+
 // Main function to set up the HTTP server
 func main() {
 	r := chi.NewRouter()
 
 	// Define the POST endpoint
-	r.Post("/", {{ .FunctionName }})
+	r.Post("/", {{ .FunctionName }}Handler)
 
 	// Start the HTTP server
 	fmt.Println("Starting server on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
 	}
-}
-`
-
-// TODO wrap the extracted goroutine in a function that
-// takes a http.ResponseWriter and *http.Request as arguments
-// OR perhaps we only support extracting goroutines that already have this signature for now
-const handlerTemplate = `
-func {{ .FunctionName }}Handler(w http.ResponseWriter, r *http.Request) {
-	{{ .FunctionName }}(w, r)
 }
 `
 

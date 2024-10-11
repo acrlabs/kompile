@@ -14,9 +14,8 @@ import (
 	"golang.org/x/image/draw"
 )
 
-const outputDir = "images/"
-
 func resizeImage(imgReader io.Reader, result chan<- string) {
+	outputDir := "images/"
 	origImage, err := jpeg.Decode(imgReader)
 	if err != nil {
 		log.Printf("Unable to decode image: %v", err)
@@ -43,7 +42,10 @@ func resizeImage(imgReader io.Reader, result chan<- string) {
 	}
 	defer output.Close()
 
-	jpeg.Encode(output, newImage, nil)
+	if err := jpeg.Encode(output, newImage, nil); err != nil {
+		log.Printf("could not encode image: %v", err)
+		return
+	}
 	log.Println("Finished resizing image")
 }
 

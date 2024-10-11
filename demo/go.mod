@@ -1,4 +1,4 @@
-module github.com/acrlabs/kcc/demo
+module github.com/acrlabs/kompile/demo
 
 go 1.22.3
 

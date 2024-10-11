@@ -83,3 +83,4 @@ linters-settings:
 issues:
   exclude-dirs:
     - output
+    - demo
