@@ -4,39 +4,70 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/parser"
 	"go/printer"
 	"go/token"
 	"log"
 
 	"github.com/go-toolsmith/astcopy"
 	"github.com/samber/lo"
+	"golang.org/x/tools/go/ast/astutil"
 )
 
-//nolint:gochecknoglobals // this is demo code
-var functions = make(map[string]*ast.FuncDecl)
+type Kompiler struct {
+	node      ast.Node
+	fset      *token.FileSet
+	functions map[string]*ast.FuncDecl
+}
 
-func FindFunctions(node ast.Node) {
-	ast.Inspect(node, func(n ast.Node) bool {
+func New(filename string) (*Kompiler, error) {
+	fset := token.NewFileSet()
+
+	// parse the source file into an AST
+	node, err := parser.ParseFile(fset, filename, nil, parser.AllErrors)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing file: %w", err)
+	}
+	return &Kompiler{
+		node:      node,
+		fset:      fset,
+		functions: map[string]*ast.FuncDecl{},
+	}, nil
+}
+
+func (self *Kompiler) Compile(outputDir string) error {
+	self.FindFunctions()
+	self.FindGoroutines(outputDir)
+	return generateClientFile(self.node, self.fset, outputDir)
+}
+
+func (self *Kompiler) FindFunctions() {
+	ast.Inspect(self.node, func(n ast.Node) bool {
 		//nolint:gocritic // can't use .(type) outside of switch
 		switch x := n.(type) {
 		case *ast.FuncDecl:
-			functions[x.Name.Name] = x
+			self.functions[x.Name.Name] = x
 		}
 		return true
 	})
 }
 
-func FindGoroutines(node ast.Node, fset *token.FileSet, outputDir string) {
-	ast.Inspect(node, func(n ast.Node) bool {
+func (self *Kompiler) FindGoroutines(outputDir string) {
+	astutil.Apply(self.node, nil, func(c *astutil.Cursor) bool {
+		n := c.Node()
 		if goStmt, ok := n.(*ast.GoStmt); ok {
 			if callExpr, ok := goStmt.Call.Fun.(*ast.Ident); ok {
-				if function, ok := functions[callExpr.Name]; ok {
+				if function, ok := self.functions[callExpr.Name]; ok {
 					fmt.Printf("The goroutine is calling the function %s\n", function.Name.Name)
-					fstring := printFullFuncDecl(function, fset)
+
+					// These are the argument parameters inside the function declaration...
+					args, returns := convertChannelArgsToReturns(function)
+					fstring := printFullFuncDecl(function, args, returns, self.fset)
 					if err := generateServerFile(function.Name.Name, fstring, outputDir); err != nil {
 						log.Fatalf("Error generating server file: %s", err)
 					}
-					replaceWithServiceCall(goStmt)
+
+					c.Replace(generateServiceCall(goStmt.Call.Args[0]))
 				}
 			}
 		}
@@ -44,12 +75,11 @@ func FindGoroutines(node ast.Node, fset *token.FileSet, outputDir string) {
 	})
 }
 
-func printFullFuncDecl(funcDecl *ast.FuncDecl, fset *token.FileSet) string {
+func printFullFuncDecl(funcDecl *ast.FuncDecl, args, returns []*ast.Field, fset *token.FileSet) string {
 	var buf bytes.Buffer
 	newFuncDecl := astcopy.FuncDecl(funcDecl)
 
 	// Look for "channel" arguments; these are interpreted as returns
-	args, returns := convertChannelArgsToReturns(funcDecl)
 	newFuncDecl.Type.Params.List = args
 	newFuncDecl.Type.Results = &ast.FieldList{List: returns}
 
@@ -120,10 +150,22 @@ func convertChannelSendToReturn(block *ast.BlockStmt) *ast.BlockStmt {
 	return &ast.BlockStmt{List: stmts}
 }
 
-func replaceWithServiceCall(node *ast.GoStmt) {
+func generateServiceCall(callArg ast.Expr) ast.Stmt {
 	// TODO replace goroutine call with a function call that:
 	// registers an HTTP handler to listen for channel responses'
 	// creates a pod, runs it
 	// gets pod IP address
 	// makes a POST request to the pod
+	callArgs := []ast.Expr{
+		&ast.BasicLit{Value: "\"localhost:8080\"", Kind: token.STRING},
+		&ast.BasicLit{Value: "\"application/octet-stream\"", Kind: token.STRING},
+		callArg,
+	}
+
+	return &ast.ExprStmt{
+		X: &ast.CallExpr{
+			Fun:  &ast.Ident{Name: "http.Post"},
+			Args: callArgs,
+		},
+	}
 }

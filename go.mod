@@ -6,6 +6,7 @@ require (
 	github.com/go-toolsmith/astcopy v1.1.0
 	github.com/samber/lo v1.47.0
 	github.com/spf13/cobra v1.8.1
+	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d
 )
 
 require (

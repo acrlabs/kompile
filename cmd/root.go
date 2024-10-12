@@ -1,10 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"go/parser"
-	"go/token"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -42,18 +38,13 @@ func rootCmd() *cobra.Command {
 }
 
 func start(opts *options) {
-	fset := token.NewFileSet()
-
-	// parse the source file into an AST
-	node, err := parser.ParseFile(fset, opts.filename, nil, parser.AllErrors)
+	k, err := kompiler.New(opts.filename)
 	if err != nil {
-		log.Fatalf("Error parsing file: %s", err)
-		fmt.Println(err)
-		return
+		panic(err)
 	}
-
-	kompiler.FindFunctions(node)
-	kompiler.FindGoroutines(node, fset, opts.outputDir)
+	if err := k.Compile(opts.outputDir); err != nil {
+		panic(err)
+	}
 }
 
 func main() {

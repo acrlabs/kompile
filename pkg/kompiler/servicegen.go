@@ -67,8 +67,14 @@ func generateServerFile(funcName, functionDecl, outputDir string) error {
 		FunctionName:        funcName,
 	}
 
+	serverOutputDir := fmt.Sprintf("%s/%s", outputDir, funcName)
+	os.RemoveAll(serverOutputDir)
+	if err := os.MkdirAll(serverOutputDir, os.ModePerm); err != nil {
+		return fmt.Errorf("could not create directory: %w", err)
+	}
+
 	// Create the output file
-	outfile := fmt.Sprintf("%s/%s_server.go", outputDir, funcName)
+	outfile := fmt.Sprintf("%s/main.go", serverOutputDir)
 	file, err := os.Create(outfile)
 	if err != nil {
 		return fmt.Errorf("could not create file: %w", err)
@@ -89,5 +95,5 @@ func generateServerFile(funcName, functionDecl, outputDir string) error {
 		return fmt.Errorf("could not generate imports: %w", err)
 	}
 
-	return nil
+	return initGoMod(funcName, serverOutputDir)
 }
