@@ -1,0 +1,6 @@
+FROM alpine:latest
+
+RUN mkdir /images
+COPY demo /demo
+
+CMD ["/demo"]
