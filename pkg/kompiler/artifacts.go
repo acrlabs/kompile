@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	_ "embed"
 )
 
-const dockerfileTemplate = `
-FROM alpine:latest
-
-COPY main /main
-
-CMD ["/main"]
-`
+//go:embed embeds/Dockerfile
+var dockerfile string
 
 type goBuilder struct {
 	goEnv []string
