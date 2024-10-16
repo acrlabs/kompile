@@ -10,12 +10,12 @@ import (
 
 func generateClientFile(rootNode ast.Node, fset *token.FileSet, outputDir string) error {
 	// Create the output file
-	clientOutputDir := fmt.Sprintf("%s/client", outputDir)
+	clientOutputDir := fmt.Sprintf("%s/%s", outputDir, clientDir)
 	os.RemoveAll(clientOutputDir)
 	if err := os.MkdirAll(clientOutputDir, os.ModePerm); err != nil {
 		return fmt.Errorf("could not create output directory: %w", err)
 	}
-	outfile := fmt.Sprintf("%s/main.go", clientOutputDir)
+	outfile := fmt.Sprintf("%s/%s", clientOutputDir, mainGoFile)
 	file, err := os.Create(outfile)
 	if err != nil {
 		return fmt.Errorf("could not create file: %w", err)

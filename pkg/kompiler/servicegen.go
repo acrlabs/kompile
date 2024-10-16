@@ -74,7 +74,7 @@ func generateServerFile(funcName, functionDecl, outputDir string) error {
 	}
 
 	// Create the output file
-	outfile := fmt.Sprintf("%s/main.go", serverOutputDir)
+	outfile := fmt.Sprintf("%s/%s", serverOutputDir, mainGoFile)
 	file, err := os.Create(outfile)
 	if err != nil {
 		return fmt.Errorf("could not create file: %w", err)

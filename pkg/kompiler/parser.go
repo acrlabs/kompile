@@ -14,6 +14,12 @@ import (
 	"golang.org/x/tools/go/ast/astutil"
 )
 
+const (
+	clientDir  = "client"
+	mainGoFile = "main.go"
+	exeFile    = "main"
+)
+
 type Kompiler struct {
 	node      ast.Node
 	fset      *token.FileSet
@@ -36,12 +42,28 @@ func New(filename string) (*Kompiler, error) {
 }
 
 func (self *Kompiler) Compile(outputDir string) error {
-	self.FindFunctions()
-	self.FindGoroutines(outputDir)
-	return generateClientFile(self.node, self.fset, outputDir)
+	fmt.Println("finding potential service calls")
+	self.findFunctions()
+	services := self.findGoroutines(outputDir)
+	if err := generateClientFile(self.node, self.fset, outputDir); err != nil {
+		return fmt.Errorf("could not generate client file: %w", err)
+	}
+
+	fmt.Println("building executables")
+	goBuilder, err := newGoBuilder()
+	if err != nil {
+		return fmt.Errorf("could not create builder: %w", err)
+	}
+
+	toBuild := append(services, "client")
+	if err := goBuilder.build(outputDir, toBuild); err != nil {
+		return fmt.Errorf("could not build executables: %w", err)
+	}
+
+	return nil
 }
 
-func (self *Kompiler) FindFunctions() {
+func (self *Kompiler) findFunctions() {
 	ast.Inspect(self.node, func(n ast.Node) bool {
 		//nolint:gocritic // can't use .(type) outside of switch
 		switch x := n.(type) {
@@ -52,13 +74,15 @@ func (self *Kompiler) FindFunctions() {
 	})
 }
 
-func (self *Kompiler) FindGoroutines(outputDir string) {
+func (self *Kompiler) findGoroutines(outputDir string) []string {
+	services := []string{}
 	astutil.Apply(self.node, nil, func(c *astutil.Cursor) bool {
 		n := c.Node()
 		if goStmt, ok := n.(*ast.GoStmt); ok {
 			if callExpr, ok := goStmt.Call.Fun.(*ast.Ident); ok {
 				if function, ok := self.functions[callExpr.Name]; ok {
 					fmt.Printf("The goroutine is calling the function %s\n", function.Name.Name)
+					services = append(services, function.Name.Name)
 
 					// These are the argument parameters inside the function declaration...
 					args, returns := convertChannelArgsToReturns(function)
@@ -73,6 +97,8 @@ func (self *Kompiler) FindGoroutines(outputDir string) {
 		}
 		return true
 	})
+
+	return services
 }
 
 func printFullFuncDecl(funcDecl *ast.FuncDecl, args, returns []*ast.Field, fset *token.FileSet) string {
