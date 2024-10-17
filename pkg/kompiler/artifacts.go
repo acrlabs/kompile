@@ -60,12 +60,12 @@ func (self *goBuilder) build(outputDir, dockerRegistry string, names []string) e
 		}
 
 		dockerPushCmd := exec.Command("docker", "push", dockerPath)
-		dockerBuildCmd.Dir = workingDir
-		dockerBuildCmd.Stderr = os.Stderr
+		dockerPushCmd.Dir = workingDir
+		dockerPushCmd.Stderr = os.Stderr
 		fmt.Printf("  Running %v\n", dockerPushCmd)
 
-		if err := dockerBuildCmd.Run(); err != nil {
-			return fmt.Errorf("could not run docker build for %s: %w", name, err)
+		if err := dockerPushCmd.Run(); err != nil {
+			return fmt.Errorf("could not run docker push for %s: %w", name, err)
 		}
 
 	}

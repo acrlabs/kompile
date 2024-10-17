@@ -84,3 +84,4 @@ issues:
   exclude-dirs:
     - output
     - demo
+    - embeds
