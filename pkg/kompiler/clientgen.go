@@ -41,9 +41,6 @@ func stripServiceFunctions(rootNode ast.Node, services []string) {
 func generateServiceCall(funcName, dockerRegistry string, callArg ast.Expr) ast.Stmt {
 	// TODO replace goroutine call with a function call that:
 	// registers an HTTP handler to listen for channel responses'
-	// creates a pod, runs it
-	// gets pod IP address
-	// makes a POST request to the pod
 	dockerImageStr := fmt.Sprintf("\"%s/%s:latest\"", dockerRegistry, funcName)
 	stmts := []ast.Stmt{
 		&ast.AssignStmt{
@@ -65,12 +62,13 @@ func generateServiceCall(funcName, dockerRegistry string, callArg ast.Expr) ast.
 		&ast.IfStmt{
 			Cond: &ast.BinaryExpr{
 				X:  &ast.Ident{Name: "err"},
-				Op: token.EQL,
+				Op: token.NEQ,
 				Y:  &ast.Ident{Name: "nil"},
 			},
 			Body: &ast.BlockStmt{
 				List: []ast.Stmt{
 					&ast.ExprStmt{X: &createPodErr},
+					&ast.ReturnStmt{},
 				},
 			},
 		},

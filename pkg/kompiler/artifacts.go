@@ -31,7 +31,7 @@ func newGoBuilder() (*goBuilder, error) {
 func (self *goBuilder) build(outputDir, dockerRegistry string, names []string) error {
 	for _, name := range names {
 		workingDir := fmt.Sprintf("%s/%s", outputDir, name)
-		buildCmd := exec.Command("go", "build", "-ldflags", "-s -w", "-trimpath", "-o", exeFile, mainGoFile)
+		buildCmd := exec.Command("go", "build", "-trimpath", "-o", exeFile, mainGoFile)
 		buildCmd.Dir = workingDir
 		buildCmd.Env = self.goEnv
 		buildCmd.Stderr = os.Stderr

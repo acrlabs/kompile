@@ -6,6 +6,9 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
+	"os"
+
+	_ "embed"
 
 	"golang.org/x/tools/go/ast/astutil"
 )
@@ -15,6 +18,9 @@ const (
 	mainGoFile = "main.go"
 	exeFile    = "main"
 )
+
+//go:embed embeds/client.yml
+var clientYml string
 
 type Kompiler struct {
 	node      ast.Node
@@ -38,7 +44,6 @@ func New(filename string) (*Kompiler, error) {
 }
 
 func (self *Kompiler) Compile(outputDir, dockerRegistry string) error {
-	ast.Print(self.fset, self.node)
 	fmt.Println("finding potential service calls")
 	self.findFunctions()
 	services := self.findGoroutines(outputDir, dockerRegistry)
@@ -56,6 +61,13 @@ func (self *Kompiler) Compile(outputDir, dockerRegistry string) error {
 	if err := goBuilder.build(outputDir, dockerRegistry, toBuild); err != nil {
 		return fmt.Errorf("could not build executables: %w", err)
 	}
+
+	f, err := os.Create(fmt.Sprintf("%s/client/deployment.yml", outputDir))
+	if err != nil {
+		return fmt.Errorf("could not create client k8s manifest: %w", err)
+	}
+	defer f.Close()
+	fmt.Fprintf(f, clientYml)
 
 	return nil
 }

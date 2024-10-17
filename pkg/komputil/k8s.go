@@ -3,6 +3,7 @@ package komputil
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -29,12 +30,12 @@ func CreateAndWaitForPod(name, image string) (string, error) {
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    namespace,
-			GenerateName: name + "-",
+			GenerateName: strings.ToLower(name) + "-",
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:  name,
+					Name:  strings.ToLower(name),
 					Image: image,
 					Ports: []corev1.ContainerPort{
 						{ContainerPort: 8080},

@@ -53,6 +53,7 @@ func uploadImage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
 	}
+	fmt.Println("uploading an image for processing")
 
 	ch := make(chan string)
 	go resizeImage(r.Body, ch)
@@ -62,6 +63,7 @@ func uploadImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	fmt.Println("starting up")
 	http.HandleFunc("/upload", uploadImage)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
