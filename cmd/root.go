@@ -11,8 +11,9 @@ import (
 const progname = "kompile"
 
 type options struct {
-	filename  string
-	outputDir string
+	filename       string
+	outputDir      string
+	dockerRegistry string
 }
 
 func rootCmd() *cobra.Command {
@@ -30,6 +31,13 @@ func rootCmd() *cobra.Command {
 
 	root.PersistentFlags().StringVarP(&opts.filename, "filename", "f", "", "go program to parse")
 	root.PersistentFlags().StringVarP(&opts.outputDir, "output", "o", "output", "directory to create generated files")
+	root.PersistentFlags().StringVarP(
+		&opts.dockerRegistry,
+		"docker-registry",
+		"r",
+		"localhost:5000",
+		"location of docker registry to push to",
+	)
 	if err := root.MarkPersistentFlagRequired("filename"); err != nil {
 		panic(err)
 	}
@@ -42,7 +50,7 @@ func start(opts *options) {
 	if err != nil {
 		panic(err)
 	}
-	if err := k.Compile(opts.outputDir); err != nil {
+	if err := k.Compile(opts.outputDir, opts.dockerRegistry); err != nil {
 		panic(err)
 	}
 }

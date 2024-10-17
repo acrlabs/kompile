@@ -41,7 +41,7 @@ func New(filename string) (*Kompiler, error) {
 	}, nil
 }
 
-func (self *Kompiler) Compile(outputDir string) error {
+func (self *Kompiler) Compile(outputDir, dockerRegistry string) error {
 	fmt.Println("finding potential service calls")
 	self.findFunctions()
 	services := self.findGoroutines(outputDir)
@@ -56,7 +56,7 @@ func (self *Kompiler) Compile(outputDir string) error {
 	}
 
 	toBuild := append(services, "client")
-	if err := goBuilder.build(outputDir, toBuild); err != nil {
+	if err := goBuilder.build(outputDir, dockerRegistry, toBuild); err != nil {
 		return fmt.Errorf("could not build executables: %w", err)
 	}
 
