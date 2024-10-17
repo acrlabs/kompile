@@ -24,5 +24,10 @@ func initGoMod(name, outputDir string) error {
 	if err := tidyCmd.Run(); err != nil {
 		return fmt.Errorf("could not run go mod tidy: %w", err)
 	}
+	replaceCmd := exec.Command("go", "mod", "edit", "-replace=github.com/acrlabs/kompile=../../")
+	replaceCmd.Dir = outputDir
+	if err := replaceCmd.Run(); err != nil {
+		return fmt.Errorf("could not run go mod edit: %w", err)
+	}
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"go/printer"
 	"go/token"
 	"os"
+	"strings"
 
 	"github.com/samber/lo"
 	"golang.org/x/tools/go/ast/astutil"
@@ -41,7 +42,8 @@ func stripServiceFunctions(rootNode ast.Node, services []string) {
 func generateServiceCall(funcName, dockerRegistry string, callArg ast.Expr) ast.Stmt {
 	// TODO replace goroutine call with a function call that:
 	// registers an HTTP handler to listen for channel responses'
-	dockerImageStr := fmt.Sprintf("\"%s/%s:latest\"", dockerRegistry, funcName)
+	lowerName := strings.ToLower(funcName)
+	dockerImageStr := fmt.Sprintf("\"%s/%s:latest\"", dockerRegistry, lowerName)
 	stmts := []ast.Stmt{
 		&ast.AssignStmt{
 			Lhs: []ast.Expr{
@@ -53,7 +55,7 @@ func generateServiceCall(funcName, dockerRegistry string, callArg ast.Expr) ast.
 				&ast.CallExpr{
 					Fun: &ast.Ident{Name: "komputil.CreateAndWaitForPod"},
 					Args: []ast.Expr{
-						&ast.BasicLit{Value: fmt.Sprintf("\"%s\"", funcName), Kind: token.STRING},
+						&ast.BasicLit{Value: fmt.Sprintf("\"%s\"", lowerName), Kind: token.STRING},
 						&ast.BasicLit{Value: dockerImageStr, Kind: token.STRING},
 					},
 				},
