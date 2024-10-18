@@ -39,7 +39,6 @@ func New(filename string) (*Kompiler, error) {
 }
 
 func (self *Kompiler) Compile(outputDir, dockerRegistry string) error {
-	ast.Print(self.fset, self.node)
 	fmt.Println("finding potential service calls")
 	self.findImportantNodes()
 	services, endpoints := self.replaceGoroutines(outputDir, dockerRegistry)

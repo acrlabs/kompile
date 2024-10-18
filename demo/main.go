@@ -16,7 +16,7 @@ import (
 )
 
 func resizeImage(data []byte, result chan<- string) {
-	outputDir := "images/"
+	outputDir := "/data"
 	origImage, err := jpeg.Decode(bytes.NewReader(data))
 	if err != nil {
 		log.Printf("Unable to decode image: %v", err)
@@ -31,7 +31,7 @@ func resizeImage(data []byte, result chan<- string) {
 	newX := origX / 2
 	newY := origY / 2
 
-	fmt.Printf("Resizing image: (%d, %d) -> (%d, %d)\n", origX, origY, newX, newY)
+	log.Printf("Resizing image: (%d, %d) -> (%d, %d)\n", origX, origY, newX, newY)
 	time.Sleep(10 * time.Second)
 	newImage := image.NewRGBA(image.Rect(0, 0, newX, newY))
 	draw.CatmullRom.Scale(newImage, newImage.Rect, origImage, origImage.Bounds(), draw.Over, nil)
@@ -55,7 +55,7 @@ func uploadImage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
 		return
 	}
-	fmt.Println("uploading an image for processing")
+	log.Println("uploading an image for processing")
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {

@@ -57,10 +57,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-          securityContext:
-            capabilities:
-              add:
-                - SYS_PTRACE
       serviceAccountName: {{ .ControllerName }}
       nodeSelector:
         type: kind-worker

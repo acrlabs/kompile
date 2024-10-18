@@ -3,7 +3,6 @@ module github.com/acrlabs/kompile
 go 1.22.3
 
 require (
-	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-toolsmith/astcopy v1.1.0
 	github.com/samber/lo v1.47.0
 	github.com/spf13/cobra v1.8.1

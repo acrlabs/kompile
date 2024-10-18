@@ -26,6 +26,7 @@ func CreateAndWaitForPod(name, image string) (string, error) {
 	}
 
 	namespace := os.Getenv("POD_NAMESPACE")
+	hostVolumeType := corev1.HostPathDirectory
 
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -33,15 +34,30 @@ func CreateAndWaitForPod(name, image string) (string, error) {
 			GenerateName: name + "-",
 		},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:  name,
-					Image: image,
-					Ports: []corev1.ContainerPort{
-						{ContainerPort: 8080},
+			Containers: []corev1.Container{{
+				Name:  name,
+				Image: image,
+				Ports: []corev1.ContainerPort{
+					{ContainerPort: 8080},
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "data",
+						MountPath: "/data",
 					},
 				},
-			},
+			}},
+			Volumes: []corev1.Volume{{
+				Name: "data",
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: "/data",
+						Type: &hostVolumeType,
+					},
+				},
+			}},
+			NodeSelector:  map[string]string{"type": "kind-worker"},
+			RestartPolicy: corev1.RestartPolicyNever,
 		},
 	}
 

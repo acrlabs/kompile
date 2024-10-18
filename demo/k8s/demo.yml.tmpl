@@ -33,5 +33,13 @@ spec:
           name: photo-service
           ports:
             - containerPort: 8080
+          volumeMounts:
+            - name: data
+              mountPath: /data
       nodeSelector:
         type: kind-worker
+      volumes:
+        - name: data
+          hostPath:
+            path: /data
+            type: Directory

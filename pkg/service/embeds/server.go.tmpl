@@ -1,11 +1,5 @@
 package main
 
-import (
-	"fmt"
-    "io"
-	"net/http"
-)
-
 // Handler function to be invoked
 {{ .FunctionDeclaration }}
 
@@ -18,7 +12,10 @@ func {{ .FunctionName }}Handler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	go {{ .FunctionName}}(data)
+    go func() {
+        {{ .FunctionName}}(data)
+        os.Exit(0)
+    }()
 	w.WriteHeader(http.StatusOK)
 }
 
