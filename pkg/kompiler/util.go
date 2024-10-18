@@ -1,33 +1,32 @@
 package kompiler
 
 import (
-	"fmt"
-	"os/exec"
+	"go/ast"
 )
 
-func generateImports(filePath string) error {
-	err := exec.Command("goimports", "-w", filePath).Run()
-	if err != nil {
-		return fmt.Errorf("could not run goimports: %w", err)
+func isChannelAssignment(a *ast.AssignStmt) bool {
+	if len(a.Rhs) != 1 {
+		return false
 	}
-	return nil
-}
 
-func initGoMod(name, outputDir string) error {
-	initCmd := exec.Command("go", "mod", "init", name)
-	initCmd.Dir = outputDir
-	if err := initCmd.Run(); err != nil {
-		return fmt.Errorf("could not run go mod init: %w", err)
+	callExpr, ok := a.Rhs[0].(*ast.CallExpr)
+	if !ok {
+		return false
 	}
-	tidyCmd := exec.Command("go", "mod", "tidy")
-	tidyCmd.Dir = outputDir
-	if err := tidyCmd.Run(); err != nil {
-		return fmt.Errorf("could not run go mod tidy: %w", err)
+
+	fn, ok := callExpr.Fun.(*ast.Ident)
+	if !ok {
+		return false
 	}
-	replaceCmd := exec.Command("go", "mod", "edit", "-replace=github.com/acrlabs/kompile=../../")
-	replaceCmd.Dir = outputDir
-	if err := replaceCmd.Run(); err != nil {
-		return fmt.Errorf("could not run go mod edit: %w", err)
+
+	if fn.Name != "make" {
+		return false
 	}
-	return nil
+
+	if len(callExpr.Args) != 1 {
+		return false
+	}
+
+	_, ok = callExpr.Args[0].(*ast.ChanType)
+	return ok
 }

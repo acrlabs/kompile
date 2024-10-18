@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	_ "embed"
+
+	"github.com/acrlabs/kompile/pkg/util"
 )
 
 //go:embed embeds/Dockerfile
@@ -31,7 +33,7 @@ func newGoBuilder() (*goBuilder, error) {
 func (self *goBuilder) build(outputDir, dockerRegistry string, names []string) error {
 	for _, name := range names {
 		workingDir := fmt.Sprintf("%s/%s", outputDir, name)
-		buildCmd := exec.Command("go", "build", "-trimpath", "-o", exeFile, mainGoFile)
+		buildCmd := exec.Command("go", "build", "-trimpath", "-o", util.ExeFile, util.MainGoFile)
 		buildCmd.Dir = workingDir
 		buildCmd.Env = self.goEnv
 		buildCmd.Stderr = os.Stderr

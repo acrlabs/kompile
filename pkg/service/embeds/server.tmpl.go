@@ -12,11 +12,8 @@ import (
 
 // Wrapped handler function
 func {{ .FunctionName }}Handler(w http.ResponseWriter, r *http.Request) {
-	ret := {{ .FunctionName}}(r.Body)
+	{{ .FunctionName}}(r.Body)
 	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte(ret)); err != nil {
-		fmt.Printf("Error writing to client: %v\n", err)
-	}
 }
 
 // Main function to set up the HTTP server
