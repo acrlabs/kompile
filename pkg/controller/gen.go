@@ -25,23 +25,6 @@ type ControllerConfig struct {
 	ControllerImage string
 }
 
-func httpError(msg string) *ast.CallExpr {
-	return &ast.CallExpr{
-		Fun: &ast.Ident{Name: "http.Error"},
-		Args: []ast.Expr{
-			&ast.Ident{Name: "w"},
-			&ast.CallExpr{
-				Fun: &ast.Ident{Name: "fmt.Sprintf"},
-				Args: []ast.Expr{
-					&ast.BasicLit{Value: fmt.Sprintf("\"%s: %%v\"", msg), Kind: token.STRING},
-					&ast.Ident{Name: "err"},
-				},
-			},
-			&ast.Ident{Name: "http.StatusInternalServerError"},
-		},
-	}
-}
-
 func GenerateServiceCall(funcName, dockerRegistry string, callArg ast.Expr) ast.Stmt {
 	lowerName := strings.ToLower(funcName)
 	dockerImageStr := fmt.Sprintf("\"%s/%s:latest\"", dockerRegistry, lowerName)
@@ -70,18 +53,44 @@ func GenerateServiceCall(funcName, dockerRegistry string, callArg ast.Expr) ast.
 			},
 			Body: &ast.BlockStmt{
 				List: []ast.Stmt{
-					&ast.ExprStmt{X: httpError("could not create pod")},
+					&ast.ExprStmt{X: util.HttpErrorExpr("could not create pod: %v")},
 					&ast.ReturnStmt{},
 				},
 			},
 		},
 		&ast.ExprStmt{
-			X: &ast.CallExpr{
+			X: util.FmtPrintExpr("Printf", "making request to pod: %s\\n", "podUrl"),
+		},
+		&ast.AssignStmt{
+			Lhs: []ast.Expr{&ast.Ident{Name: "reader"}},
+			Tok: token.DEFINE,
+			Rhs: []ast.Expr{&ast.CallExpr{
+				Fun:  &ast.Ident{Name: "bytes.NewReader"},
+				Args: []ast.Expr{callArg},
+			}},
+		},
+		&ast.AssignStmt{
+			Lhs: []ast.Expr{&ast.Ident{Name: "_"}, &ast.Ident{Name: "err"}},
+			Tok: token.ASSIGN,
+			Rhs: []ast.Expr{&ast.CallExpr{
 				Fun: &ast.Ident{Name: "http.Post"},
 				Args: []ast.Expr{
 					&ast.Ident{Name: "podUrl"},
 					&ast.BasicLit{Value: "\"application/octet-stream\"", Kind: token.STRING},
-					callArg,
+					&ast.Ident{Name: "reader"},
+				},
+			}},
+		},
+		&ast.IfStmt{
+			Cond: &ast.BinaryExpr{
+				X:  &ast.Ident{Name: "err"},
+				Op: token.NEQ,
+				Y:  &ast.Ident{Name: "nil"},
+			},
+			Body: &ast.BlockStmt{
+				List: []ast.Stmt{
+					&ast.ExprStmt{X: util.HttpErrorExpr("could not make POST request to service: %v")},
+					&ast.ReturnStmt{},
 				},
 			},
 		},
@@ -236,6 +245,9 @@ func addHandlerFuncs(rootNode ast.Node, endpoints []string) {
 			},
 			Body: &ast.BlockStmt{
 				List: []ast.Stmt{
+					&ast.ExprStmt{
+						X: util.FmtPrintExpr("Println", fmt.Sprintf("received response on handler %s", endpoint)),
+					},
 					&ast.AssignStmt{
 						Lhs: []ast.Expr{
 							&ast.Ident{Name: "b"},
@@ -259,7 +271,7 @@ func addHandlerFuncs(rootNode ast.Node, endpoints []string) {
 						},
 						Body: &ast.BlockStmt{
 							List: []ast.Stmt{
-								&ast.ExprStmt{X: httpError("could not read response")},
+								&ast.ExprStmt{X: util.HttpErrorExpr("could not read response: %v")},
 								&ast.ReturnStmt{},
 							},
 						},

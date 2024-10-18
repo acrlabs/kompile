@@ -3,6 +3,7 @@ package komputil
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -24,7 +25,7 @@ func CreateAndWaitForPod(name, image string) (string, error) {
 		panic(err.Error())
 	}
 
-	namespace := "default" // TODO
+	namespace := os.Getenv("POD_NAMESPACE")
 
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -64,7 +65,7 @@ func CreateAndWaitForPod(name, image string) (string, error) {
 		}
 
 		if foundPod.Status.Phase == corev1.PodRunning {
-			podURL := fmt.Sprintf("%s:8080", foundPod.Status.PodIP)
+			podURL := fmt.Sprintf("http://%s:8080", foundPod.Status.PodIP)
 			return podURL, nil
 		}
 		time.Sleep(time.Second)

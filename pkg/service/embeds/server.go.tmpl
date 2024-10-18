@@ -1,0 +1,30 @@
+package main
+
+import (
+	"fmt"
+    "io"
+	"net/http"
+)
+
+// Handler function to be invoked
+{{ .FunctionDeclaration }}
+
+// Wrapped handler function
+func {{ .FunctionName }}Handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("received new request")
+    data, err := io.ReadAll(r.Body)
+    if err != nil {
+        http.Error(w, "could not read request body", http.StatusBadRequest)
+        return
+    }
+
+	go {{ .FunctionName}}(data)
+	w.WriteHeader(http.StatusOK)
+}
+
+// Main function to set up the HTTP server
+func main() {
+	http.HandleFunc("/", {{ .FunctionName }}Handler)
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}

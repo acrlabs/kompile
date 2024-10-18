@@ -18,7 +18,7 @@ import (
 	_ "embed"
 )
 
-//go:embed embeds/server.tmpl.go
+//go:embed embeds/server.go.tmpl
 var serverTemplate string
 
 // Struct to hold the function declaration and its name
@@ -112,19 +112,38 @@ func convertChannelSendToHTTPPost(name string, block *ast.BlockStmt) {
 	for i, stmt := range block.List {
 		if send, ok := stmt.(*ast.SendStmt); ok {
 			chName := send.Chan.(*ast.Ident).Name
-			block.List[i] = &ast.ExprStmt{
-				X: &ast.CallExpr{
-					Fun: &ast.Ident{Name: "http.Post"},
-					Args: []ast.Expr{
-						&ast.BasicLit{
-							Value: fmt.Sprintf("\"%s:8080/%s_%s\"", util.ControllerName, name, chName),
-							Kind:  token.STRING,
+			block.List[i] = &ast.IfStmt{
+				Init: &ast.AssignStmt{
+					Lhs: []ast.Expr{
+						&ast.Ident{Name: "_"},
+						&ast.Ident{Name: "err"},
+					},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{&ast.CallExpr{
+						Fun: &ast.Ident{Name: "http.Post"},
+						Args: []ast.Expr{
+							&ast.BasicLit{
+								Value: fmt.Sprintf("\"http://%s:8080/%s_%s\"", util.ControllerName, name, chName),
+								Kind:  token.STRING,
+							},
+							&ast.BasicLit{
+								Value: "\"application/text\"",
+								Kind:  token.STRING,
+							},
+							sendStmtToIoReader(send),
 						},
-						&ast.BasicLit{
-							Value: "\"application/text\"",
-							Kind:  token.STRING,
+					}},
+				},
+				Cond: &ast.BinaryExpr{
+					X:  &ast.Ident{Name: "err"},
+					Op: token.NEQ,
+					Y:  &ast.Ident{Name: "nil"},
+				},
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{
+						&ast.ExprStmt{
+							X: util.FmtPrintExpr("Printf", "could not send return value: %v\\n", "err"),
 						},
-						sendStmtToIoReader(send),
 					},
 				},
 			}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -14,9 +15,9 @@ import (
 	"golang.org/x/image/draw"
 )
 
-func resizeImage(imgReader io.Reader, result chan<- string) {
+func resizeImage(data []byte, result chan<- string) {
 	outputDir := "images/"
-	origImage, err := jpeg.Decode(imgReader)
+	origImage, err := jpeg.Decode(bytes.NewReader(data))
 	if err != nil {
 		log.Printf("Unable to decode image: %v", err)
 		return
@@ -52,11 +53,18 @@ func resizeImage(imgReader io.Reader, result chan<- string) {
 func uploadImage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST is supported", http.StatusMethodNotAllowed)
+		return
 	}
 	fmt.Println("uploading an image for processing")
 
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "could not read request body", http.StatusBadRequest)
+		return
+	}
+
 	ch := make(chan string)
-	go resizeImage(r.Body, ch)
+	go resizeImage(data, ch)
 	job_id := <-ch
 
 	fmt.Fprintf(w, "{job_id: %s}", job_id)
