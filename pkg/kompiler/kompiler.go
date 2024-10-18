@@ -57,7 +57,11 @@ func (self *Kompiler) Compile(outputDir, dockerRegistry string) error {
 		return fmt.Errorf("could not build executables: %w", err)
 	}
 
-	return controller.WriteYaml(outputDir)
+	if err := controller.WriteYaml(outputDir); err != nil {
+		return fmt.Errorf("could not write controller YAML: %w", err)
+	}
+
+	return nil
 }
 
 func (self *Kompiler) findImportantNodes() {

@@ -10,11 +10,12 @@ import (
 	"os"
 	"text/template"
 
-	_ "embed"
-
-	"github.com/acrlabs/kompile/pkg/util"
 	"github.com/go-toolsmith/astcopy"
 	"github.com/samber/lo"
+
+	"github.com/acrlabs/kompile/pkg/util"
+
+	_ "embed"
 )
 
 //go:embed embeds/server.tmpl.go
@@ -83,7 +84,11 @@ func GenerateMain(funcName, functionDecl, outputDir string) error {
 		return fmt.Errorf("could not generate imports: %w", err)
 	}
 
-	return util.InitGoMod(funcName, serverOutputDir)
+	if err := util.InitGoMod(funcName, serverOutputDir); err != nil {
+		return fmt.Errorf("could not set up go.mod: %w", err)
+	}
+
+	return nil
 }
 
 func stripReturns(block *ast.BlockStmt) *ast.BlockStmt {

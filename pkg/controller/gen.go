@@ -9,15 +9,15 @@ import (
 	"os"
 	"strings"
 
-	_ "embed"
-
 	"github.com/samber/lo"
 	"golang.org/x/tools/go/ast/astutil"
 
 	"github.com/acrlabs/kompile/pkg/util"
+
+	_ "embed"
 )
 
-//go:embed embeds/controller.yml
+//go:embed embeds/controller.yml.tmpl
 var controllerYamlTemplate string
 
 type ControllerConfig struct {
@@ -117,7 +117,10 @@ func GenerateMain(rootNode ast.Node, services, endpoints []string, outputDir str
 		return fmt.Errorf("could not generate imports: %w", err)
 	}
 
-	return util.InitGoMod("client", controllerOutputDir)
+	if err := util.InitGoMod("client", controllerOutputDir); err != nil {
+		return fmt.Errorf("could not set up go.mod: %w", err)
+	}
+	return nil
 }
 
 func WriteYaml(outputDir string) error {

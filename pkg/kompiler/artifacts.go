@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"strings"
 
-	_ "embed"
-
 	"github.com/acrlabs/kompile/pkg/util"
+
+	_ "embed"
 )
 
 //go:embed embeds/Dockerfile
@@ -33,6 +33,8 @@ func newGoBuilder() (*goBuilder, error) {
 func (self *goBuilder) build(outputDir, dockerRegistry string, names []string) error {
 	for _, name := range names {
 		workingDir := fmt.Sprintf("%s/%s", outputDir, name)
+
+		//nolint:gosec // this is fine dot jpeg
 		buildCmd := exec.Command("go", "build", "-trimpath", "-o", util.ExeFile, util.MainGoFile)
 		buildCmd.Dir = workingDir
 		buildCmd.Env = self.goEnv
@@ -49,7 +51,7 @@ func (self *goBuilder) build(outputDir, dockerRegistry string, names []string) e
 		}
 		defer f.Close()
 
-		fmt.Fprintf(f, dockerfile)
+		fmt.Fprint(f, dockerfile)
 
 		dockerPath := strings.ToLower(fmt.Sprintf("%s/%s:latest", dockerRegistry, name))
 		dockerBuildCmd := exec.Command("docker", "build", ".", "-t", dockerPath)
@@ -69,7 +71,6 @@ func (self *goBuilder) build(outputDir, dockerRegistry string, names []string) e
 		if err := dockerPushCmd.Run(); err != nil {
 			return fmt.Errorf("could not run docker push for %s: %w", name, err)
 		}
-
 	}
 
 	return nil
