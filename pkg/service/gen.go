@@ -112,7 +112,7 @@ func convertChannelSendToHTTPPost(name string, block *ast.BlockStmt) {
 					Fun: &ast.Ident{Name: "http.Post"},
 					Args: []ast.Expr{
 						&ast.BasicLit{
-							Value: fmt.Sprintf("\"%s:8080/%s_%s\"", util.ControllerSvcName, name, chName),
+							Value: fmt.Sprintf("\"%s:8080/%s_%s\"", util.ControllerName, name, chName),
 							Kind:  token.STRING,
 						},
 						&ast.BasicLit{

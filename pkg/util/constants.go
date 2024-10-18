@@ -1,7 +1,8 @@
 package util
 
 const (
-	ControllerSvcName = "kompile-demo-controller"
+	ControllerDir  = "controller"
+	ControllerName = "kompile-demo-controller"
 
 	MainGoFile = "main.go"
 	ExeFile    = "main"
