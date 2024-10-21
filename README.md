@@ -1,6 +1,6 @@
 # kompile
 A demo Kubernetes compiler
-* Run `kind create cluster --config demo/k8s/kind-config.yaml` to spin up a local cluster compatible with the demo app
+* Run `sh demo/create_cluster.sh` to spin up a local cluster compatible with the demo app
 * Run `make` to generate the `kompile` binary and the demo binary, build the demo Docker image, and deploy it to k8s
 * Run `.build/demo` to start the demo binary locally; then run `curl -XPOST localhost:8080/upload --data-binary
   @"me.jpg"` to have the image be resized.
