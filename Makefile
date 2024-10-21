@@ -1,13 +1,15 @@
 ARTIFACTS ?= demo
 COVERAGE_DIR=$(BUILD_DIR)/coverage
 GO_COVER_FILE=$(COVERAGE_DIR)/go-coverage.txt
+GOOS ?= linux
+GOARCH ?= amd64
 
 include build/base.mk
 include build/k8s.mk
 
 main:
-	CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath -o $(BUILD_DIR)/kompile ./cmd/.
-	cd demo && CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath -o $(BUILD_DIR)/demo main.go
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags "-s -w" -trimpath -o $(BUILD_DIR)/kompile ./cmd/.
+	cd demo && CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags "-s -w" -trimpath -o $(BUILD_DIR)/demo main.go
 
 lint:
 	golangci-lint run
